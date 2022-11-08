@@ -14,22 +14,60 @@ RWObject::RWObject(char* data): _data(data) {
     this->_miss_write_count = 0;
 }
 
+RWObject::~RWObject() {}
+
 CacheConfig::CacheConfig(
-            int memoryAddrLen,
-            int blockSize, 
-            int setAssociativity, 
-            WritePolicy writePolicy, 
-            ReplacementPolicy replacementPolicy
-        ):
-            _memoryAddrLen(memoryAddrLen),
-            _blockSize(blockSize),
-            _setAssociativity(setAssociativity),
-            _writePolicy(writePolicy),
-            _replacementPolicy(replacementPolicy) {}
+        char* cache,
+        int memoryAddrLen,
+        int blockSize, 
+        int setAssociativity, 
+        WritePolicy writePolicy, 
+        ReplacementPolicy replacementPolicy
+    ):
+    _cacheSize(sizeof(cache)),
+    _memoryAddrLen(memoryAddrLen),
+    _blockSize(blockSize),
+    _setAssociativity(setAssociativity),
+    _writePolicy(writePolicy),
+    _replacementPolicy(replacementPolicy) {
+    if (sizeof(cache) == 0){
+        throw std::invalid_argument("cache cannot be empty");
+    }
+    size_t cacheSize = sizeof(this->_cacheSize);
+    size_t numBlocks = cacheSize / blockSize;
+
+    size_t numBitsTotal = this->_memoryAddrLen;
+    size_t numBitIndex = int(log2(numBlocks / setAssociativity));
+    size_t numBitByteOffset = int(log2(blockSize));
+
+    size_t numBitTag = 0;
+    if (numBitsTotal > numBitIndex + numBitByteOffset) {
+        numBitTag = numBitsTotal - numBitIndex - numBitByteOffset;
+    }
+}
+
+CacheConfig::~CacheConfig() {}
 
 Cache::Cache(char* cache_data, CacheConfig* config, RWObject* lowerRW) : RWObject(cache_data) {
     this->_config = config;
     this->_lower = lowerRW;
+}
+
+Cache::~Cache() {}
+
+size_t CacheConfig::parseTag(const unsigned long &address) {
+    // unsigned long shiftedAddr = address >> this->_blockSize;
+    return 0;
+}
+
+size_t CacheConfig::parseSetIndex(const unsigned long &address) {
+    
+    return 0;
+}
+
+size_t CacheConfig::parseCacheOffset(const unsigned long &address) {
+    
+    return 0;
 }
 
 char* RWObject::getData() {
@@ -40,35 +78,31 @@ void Cache::setConfig(CacheConfig* config) {
     this->_config = config;
 }
 
-bool Cache::read(char* dest, unsigned long address) {
-    size_t cacheSize = sizeof(this->getData());
-    size_t blockSize = this->_config->_blockSize;
-    size_t numBlocks = cacheSize / blockSize;
-    size_t setAssociativity = this->_config->_setAssociativity;
+bool Cache::read(char* dest, const unsigned long &address) {
 
-    size_t numBitsTotal = this->_config->_memoryAddrLen;
-    size_t numBitIndex = int(log2(numBlocks / setAssociativity));
-    size_t numBitByteOffset = int(log2(blockSize));
-    size_t numBitTag = numBitsTotal - numBitIndex - numBitByteOffset;
+
+    size_t tag = this->_config->parseTag(address);
+    size_t setIndex = this->_config->parseSetIndex(address);
+    size_t cacheOffset = this->_config->parseCacheOffset(address);
+
+    
 
     return true;
 }
 
-int extract(int , int skip, int) {
-    // 
-}
-
-void Cache::write(char* src, unsigned long address) {
+void Cache::write(char* src, const unsigned long &address) {
     return;
 }
+
+Memory::~Memory() {}
 
 Memory::Memory(char* memory_data): RWObject(memory_data) {
 }
 
-bool Memory::read(char* dest, unsigned long address) {
+bool Memory::read(char* dest, const unsigned long &address) {
     return true;
 }
 
-void Memory::write(char* src, unsigned long address) {
+void Memory::write(char* src, const unsigned long &address) {
     return;
 }
