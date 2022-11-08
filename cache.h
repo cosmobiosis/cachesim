@@ -38,12 +38,11 @@ class Cache: public RWObject {
     public:
         Cache(char* cache_data, CacheConfig* config, RWObject* lowerRW);
         void setConfig(CacheConfig* config);
-        void setLowerRW(RWObject* _lower);
         bool read(char* dest, unsigned long address);
         void write(char* src, unsigned long address);
     private:
         CacheConfig* _config;
-        RWObject* _lower; // lower level of memory
+        RWObject* _lower; // lower level of data object
 };
 
 class Memory: public RWObject {
