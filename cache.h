@@ -10,7 +10,6 @@ enum ReplacementPolicy { LRU, FIFO };
 class CacheConfig {
     public:
         CacheConfig(
-            char* cache,
             int memoryAddrLen,
             int blockSize,
             int setAssociativity, 
@@ -22,24 +21,25 @@ class CacheConfig {
         int _memoryAddrLen;
         int _blockSize;
         int _setAssociativity;
+        int _numBlocks;
         WritePolicy _writePolicy;
         ReplacementPolicy _replacementPolicy;
 
         // calculated values
-        int numBitsTotal;
-        int numBitIndex;
-        int numBitByteOffset;
+        int _numBitTag;
+        int _numBitSetIndex;
+        int _numBitBlockOffset;
 
         // functions
         size_t parseTag(const unsigned long &address);
         size_t parseSetIndex(const unsigned long &address);
-        size_t parseCacheOffset(const unsigned long &address);
+        size_t parseBlockOffset(const unsigned long &address);
 };
 
 class RWObject {
     public:
         RWObject(char* data);
-        ~RWObject();
+        virtual ~RWObject() = 0;
         // False indicating a read miss
         virtual bool read(char* dest, const unsigned long &address) = 0;
         virtual void write(char* src, const unsigned long &address) = 0;
@@ -52,21 +52,33 @@ class RWObject {
         char* _data;
 };
 
+struct MetaRow {
+    size_t tag;
+    bool valid;
+};
+
 class Cache: public RWObject {
     public:
-        Cache(char* cache_data, CacheConfig* config, RWObject* lowerRW);
+        Cache(char* cacheData, CacheConfig* config, RWObject* lowerRW);
         ~Cache();
         void setConfig(CacheConfig* config);
+        bool isValid(char* targetSet);
+        char* getCacheSet(size_t targetTag, size_t targetSetIndex);
         bool read(char* dest, const unsigned long &address);
         void write(char* src, const unsigned long &address);
+
+        // return existFlag, row
+        std::pair<bool, const struct MetaRow&> getMetaRow(size_t targetTag, size_t targetSetIndex);
+
     private:
         CacheConfig* _config;
+        struct MetaRow* _metaData;
         RWObject* _lower; // lower level of data object
 };
 
 class Memory: public RWObject {
     public:
-        Memory(char* memory_data);
+        Memory(char* memoryData);
         ~Memory();
         bool read(char* dest, const unsigned long &address);
         void write(char* src, const unsigned long &address);
