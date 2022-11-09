@@ -2,6 +2,8 @@
 #include <string>
 #include "cache.h"
 
+using namespace MemoryCacheSim;
+
 int main(int argc, char* argv[])
 {
   // if (argc < 2) {
