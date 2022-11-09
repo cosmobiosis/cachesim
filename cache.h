@@ -41,7 +41,7 @@ class RWObject {
         RWObject(char* data);
         virtual ~RWObject() = 0;
         // False indicating a read miss
-        virtual bool read(char* dest, const unsigned long &address) = 0;
+        virtual void read(char* dest, const unsigned long &address) = 0;
         virtual void write(char* src, const unsigned long &address) = 0;
         int _read_count;
         int _miss_read_count;
@@ -63,13 +63,12 @@ class Cache: public RWObject {
         ~Cache();
         void setConfig(CacheConfig* config);
         bool isValid(char* targetSet);
-        char* getCacheSet(size_t targetTag, size_t targetSetIndex);
-        bool read(char* dest, const unsigned long &address);
+
+        // read maximum amounts: block size
+        void read(char* dest, const unsigned long &address);
         void write(char* src, const unsigned long &address);
 
-        // return existFlag, row
-        std::pair<bool, const struct MetaRow&> getMetaRow(size_t targetTag, size_t targetSetIndex);
-
+        char* getCacheBlock(size_t targetTag, size_t targetSetIndex);
     private:
         CacheConfig* _config;
         struct MetaRow* _metaData;
@@ -80,6 +79,10 @@ class Memory: public RWObject {
     public:
         Memory(char* memoryData);
         ~Memory();
-        bool read(char* dest, const unsigned long &address);
+        void read(char* dest, const unsigned long &address);
         void write(char* src, const unsigned long &address);
 };
+
+// class CacheClient : public  {
+
+// }
