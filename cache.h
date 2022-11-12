@@ -4,8 +4,20 @@
 #include <sstream>
 #include <stdexcept>
 
+namespace MemoryCacheSim
+{
+
 enum WritePolicy { Through, Back };
-enum ReplacementPolicy { LRU, FIFO };
+enum ReplacementPolicy { 
+    LRU, 
+    FIFO, 
+    Clock
+};
+
+struct MetaRow {
+    size_t tag;
+    bool valid;
+};
 
 class CacheConfig {
     public:
@@ -29,17 +41,16 @@ class CacheConfig {
         int _numBitTag;
         int _numBitSetIndex;
         int _numBitBlockOffset;
-
-        // functions
-        size_t parseTag(const unsigned long &address);
-        size_t parseSetIndex(const unsigned long &address);
-        size_t parseBlockOffset(const unsigned long &address);
+        
 };
 
-class RWObject {
+class Cache {
     public:
-        RWObject(char* data);
-        virtual ~RWObject() = 0;
+        Cache(char* cacheData, CacheConfig* config);
+        ~Cache();
+        void setConfig(CacheConfig* config);
+        bool isValid(char* targetSet);
+
         // False indicating a read miss
         virtual void read(char* dest, const unsigned long &address) = 0;
         virtual void write(char* src, const unsigned long &address) = 0;
@@ -47,42 +58,23 @@ class RWObject {
         int _miss_read_count;
         int _write_count;
         int _miss_write_count;
+
         char* getData();
-    private:
-        char* _data;
-};
-
-struct MetaRow {
-    size_t tag;
-    bool valid;
-};
-
-class Cache: public RWObject {
-    public:
-        Cache(char* cacheData, CacheConfig* config, RWObject* lowerRW);
-        ~Cache();
-        void setConfig(CacheConfig* config);
-        bool isValid(char* targetSet);
+        size_t parseTag(const unsigned long &address);
+        size_t parseSetIndex(const unsigned long &address);
+        size_t parseBlockOffset(const unsigned long &address);
+        char* getCacheBlock(size_t targetTag, size_t targetSetIndex);
 
         // read maximum amounts: block size
         void read(char* dest, const unsigned long &address);
         void write(char* src, const unsigned long &address);
 
-        char* getCacheBlock(size_t targetTag, size_t targetSetIndex);
     private:
         CacheConfig* _config;
         struct MetaRow* _metaData;
-        RWObject* _lower; // lower level of data object
+        Cache* _lower; // lower level of cache object
+        Cache* _upper; // upper level of cache object
+        char* _data;
 };
 
-class Memory: public RWObject {
-    public:
-        Memory(char* memoryData);
-        ~Memory();
-        void read(char* dest, const unsigned long &address);
-        void write(char* src, const unsigned long &address);
-};
-
-// class CacheClient : public  {
-
-// }
+}

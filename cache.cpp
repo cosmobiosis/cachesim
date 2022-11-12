@@ -11,31 +11,6 @@ using namespace::std;
 namespace MemoryCacheSim
 {
 
-RWObject::RWObject(char* data): _data(data) {
-    if (sizeof(data) == 0){
-        throw std::invalid_argument("data size cannot be empty");
-    }
-    this->_read_count = 0;
-    this->_miss_read_count = 0;
-    this->_write_count = 0;
-    this->_miss_write_count = 0;
-}
-
-RWObject::~RWObject() {}
-
-
-Cache::Cache(char* cacheData, CacheConfig* config, RWObject* lowerRW) : RWObject(cacheData) {
-    setConfig(config);
-    this->_lower = lowerRW;
-}
-
-void Cache::setConfig(CacheConfig* config) {
-    this->_config = config;
-    this->_metaData = (struct MetaRow*)malloc(this->_config->_numBlocks * sizeof(struct MetaRow));
-}
-
-Cache::~Cache() {}
-
 CacheConfig::CacheConfig(
         int memoryAddrLen,
         int blockSize, 
@@ -58,8 +33,34 @@ CacheConfig::CacheConfig(
 
 CacheConfig::~CacheConfig() {}
 
+
+
+Cache::Cache(char* cacheData, CacheConfig* config, Cache* lowerCache) {
+
+    if (sizeof(data) == 0){
+        throw std::invalid_argument("data size cannot be empty");
+    }
+    this->_read_count = 0;
+    this->_miss_read_count = 0;
+    this->_write_count = 0;
+    this->_miss_write_count = 0;
+
+    // Set config
+    setConfig(config);
+    this->_lower = lowerRW;
+}
+
+void Cache::setConfig(CacheConfig* config) {
+    this->_config = config;
+    this->_metaData = (struct MetaRow*)malloc(this->_config->_numBlocks * sizeof(struct MetaRow));
+}
+
+Cache::~Cache() {}
+
+
+
 //--------------------------------------------------
-// Implementation of the cache replacement mechnisms
+// Implementation of the cache replacement mechanism
 //--------------------------------------------------
 void Cache::LRUCacheReplacement() {
 }
@@ -86,7 +87,7 @@ void Cache::handleWriteMiss() {}
 void Cache::handleReadHit() {
     // Read Hit
     // read blocksize - offset
-    size_t cacheOffset = this->_config->parseBlockOffset(address);
+    size_t cacheOffset = this->parseBlockOffset(address);
     size_t readSize = this->_config->_blockSize - cacheOffset;
     memcpy(dest, cacheBlock + cacheOffset, readSize);
 }
@@ -116,10 +117,12 @@ size_t Cache::parseBlockOffset(const unsigned long &address) {
     return address & int(pow(2, this->_numBitBlockOffset) - 1);
 }
 
+
 char* Cache::getCacheBlock(size_t targetTag, size_t targetSetIndex) {
     size_t setSize = this->_config->_setAssociativity;
     size_t setOffset = targetSetIndex * setSize;
     for (int i = setOffset; i < setOffset + setSize; i++) {
+        // Is it correct to compare the tag directly? 
         if (this->_metaData[i].valid && this->_metaData[i].tag == targetTag) {
             char* cacheHead = this->getData();
             return cacheHead + i * this->_config->_blockSize;
@@ -132,9 +135,10 @@ char* Cache::getCacheBlock(size_t targetTag, size_t targetSetIndex) {
 //--------------------------------------------------
 // Implementation of cache read and write
 //--------------------------------------------------
-void Cache::read(char* dest, const unsigned long &address) {
-    size_t tag = parseTag(address);
-    size_t setIndex = parseSetIndex(address);
+void Cache::read(char* dest, const unsigned long &memoryAddress) {
+
+    size_t tag = parseTag(memoryAddress);
+    size_t setIndex = parseSetIndex(memoryAddress);
 
     char* cacheBlock = getCacheBlock(tag, setIndex);
     _read_count += 1;
@@ -143,12 +147,13 @@ void Cache::read(char* dest, const unsigned long &address) {
         handleReadMiss();
         return;
     }
-    handleReadHit();
+    handleReadHit(dest);
     return;
 }
 
+
 void Cache::write(char* src, const unsigned long &address) {
-    
+
 }
 
 }
