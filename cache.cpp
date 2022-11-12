@@ -6,10 +6,12 @@
 #include <math.h>
 #include "cache.h"
 
+#include "memory.h"
+
 using namespace::std;
 
-namespace MemoryCacheSim
-{
+// namespace MemoryCacheSim
+//{
 
 CacheConfig::CacheConfig(
         int memoryAddrLen,
@@ -35,9 +37,9 @@ CacheConfig::~CacheConfig() {}
 
 
 
-Cache::Cache(char* cacheData, CacheConfig* config, Cache* lowerCache) {
+Cache::Cache(char* cacheData, CacheConfig* config) {
 
-    if (sizeof(data) == 0){
+    if (sizeof(cacheData) == 0){
         throw std::invalid_argument("data size cannot be empty");
     }
     this->_read_count = 0;
@@ -47,7 +49,7 @@ Cache::Cache(char* cacheData, CacheConfig* config, Cache* lowerCache) {
 
     // Set config
     setConfig(config);
-    this->_lower = lowerCache;
+    // this->_lower = lowerCache;
 }
 
 void Cache::setConfig(CacheConfig* config) {
@@ -62,37 +64,37 @@ Cache::~Cache() {}
 //--------------------------------------------------
 // Implementation of the cache replacement mechanism
 //--------------------------------------------------
-void Cache::LRUCacheReplacement() {
-}
+// void Cache::LRUCacheReplacement() {
+// }
 
-void Cache::FIFOCacheReplacement() {
-}
+// void Cache::FIFOCacheReplacement() {
+// }
 
-void Cache::ClockCacheReplacement() {
-}
+// void Cache::ClockCacheReplacement() {
+// }
 
 //--------------------------------------------------
 // Implementation of cache miss handling
 //--------------------------------------------------
-void Cache::handleReadMiss() {
-     _miss_read_count += 1;
-    this->_lower->read(dest, address);
-}
+// void Cache::handleReadMiss() {
+//      _miss_read_count += 1;
+//     // this->_lower->read(dest, address);
+// }
 
-void Cache::handleWriteMiss() {}
+// void Cache::handleWriteMiss() {}
 
-//--------------------------------------------------
-// Implementation of cache mishits handling
-//--------------------------------------------------
-void Cache::handleReadHit() {
-    // Read Hit
-    // read blocksize - offset
-    size_t cacheOffset = this->parseBlockOffset(address);
-    size_t readSize = this->_config->_blockSize - cacheOffset;
-    memcpy(dest, cacheBlock + cacheOffset, readSize);
-}
+// //--------------------------------------------------
+// // Implementation of cache mishits handling
+// //--------------------------------------------------
+// void Cache::handleReadHit() {
+//     // Read Hit
+//     // read blocksize - offset
+//     size_t cacheOffset = this->parseBlockOffset(address);
+//     size_t readSize = this->_config->_blockSize - cacheOffset;
+//     memcpy(dest, cacheBlock + cacheOffset, readSize);
+// }
 
-void Cache::handleWriteHit() {}
+// void Cache::handleWriteHit() {}
 
 
 //--------------------------------------------------
@@ -103,18 +105,18 @@ char* Cache::getData() {
 }
 
 size_t Cache::parseTag(const unsigned long &address) {
-    unsigned long tag = address >> (this->_numBitSetIndex + this->_numBitBlockOffset);
+    unsigned long tag = address >> (this->_config->_numBitSetIndex + this->_config->_numBitBlockOffset);
     return size_t(tag);
 }
 
 size_t Cache::parseSetIndex(const unsigned long &address) {
-    unsigned long shifted = address >> (this->_numBitBlockOffset);
-    unsigned long setIndex = shifted & int(pow(2, this->_numBitSetIndex) - 1);
+    unsigned long shifted = address >> (this->_config->_numBitBlockOffset);
+    unsigned long setIndex = shifted & int(pow(2, this->_config->_numBitSetIndex) - 1);
     return size_t(setIndex);
 }
 
 size_t Cache::parseBlockOffset(const unsigned long &address) {
-    return address & int(pow(2, this->_numBitBlockOffset) - 1);
+    return address & int(pow(2, this->_config->_numBitBlockOffset) - 1);
 }
 
 
@@ -144,10 +146,10 @@ void Cache::read(char* dest, const unsigned long &memoryAddress) {
     _read_count += 1;
 
     if (cacheBlock == nullptr) { // Read Miss
-        handleReadMiss();
+        // handleReadMiss();
         return;
     }
-    handleReadHit(dest);
+    // handleReadHit(dest);
     return;
 }
 
@@ -156,4 +158,4 @@ void Cache::write(char* src, const unsigned long &address) {
 
 }
 
-}
+// }

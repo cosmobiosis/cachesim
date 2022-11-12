@@ -4,8 +4,8 @@
 #include <sstream>
 #include <stdexcept>
 
-namespace MemoryCacheSim
-{
+// namespace MemoryCacheSim
+// {
 
 enum WritePolicy { Through, Back };
 enum ReplacementPolicy { 
@@ -41,7 +41,6 @@ class CacheConfig {
         int _numBitTag;
         int _numBitSetIndex;
         int _numBitBlockOffset;
-        
 };
 
 class Cache {
@@ -74,4 +73,4 @@ class Cache {
         char* _data;
 };
 
-}
+// }
