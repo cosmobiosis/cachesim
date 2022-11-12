@@ -51,9 +51,6 @@ class Cache {
         void setConfig(CacheConfig* config);
         bool isValid(char* targetSet);
 
-        // False indicating a read miss
-        virtual void read(char* dest, const unsigned long &address) = 0;
-        virtual void write(char* src, const unsigned long &address) = 0;
         int _read_count;
         int _miss_read_count;
         int _write_count;
