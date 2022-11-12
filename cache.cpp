@@ -47,7 +47,7 @@ Cache::Cache(char* cacheData, CacheConfig* config, Cache* lowerCache) {
 
     // Set config
     setConfig(config);
-    this->_lower = lowerRW;
+    this->_lower = lowerCache;
 }
 
 void Cache::setConfig(CacheConfig* config) {
