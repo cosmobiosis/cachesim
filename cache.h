@@ -4,14 +4,21 @@
 #include <sstream>
 #include <stdexcept>
 
-// namespace MemoryCacheSim
-// {
+// Import memory file
+#include "memory.h"
 
 enum WritePolicy { Through, Back };
+
 enum ReplacementPolicy { 
     LRU, 
     FIFO, 
     Clock
+};
+
+enum CacheLayer { 
+    LayerOne, 
+    LayerTwo, 
+    LayerThree
 };
 
 struct MetaRow {
@@ -45,7 +52,7 @@ class CacheConfig {
 
 class Cache {
     public:
-        Cache(char* cacheData, CacheConfig* config);
+        Cache(char* cacheData, CacheConfig* config, CacheLayer layer, void* lowerObject);
         ~Cache();
         void setConfig(CacheConfig* config);
         bool isValid(char* targetSet);
@@ -54,23 +61,29 @@ class Cache {
         int _miss_read_count;
         int _write_count;
         int _miss_write_count;
+        CacheLayer _layer;
 
         char* getData();
         size_t parseTag(const unsigned long &address);
         size_t parseSetIndex(const unsigned long &address);
         size_t parseBlockOffset(const unsigned long &address);
         char* getCacheBlock(size_t targetTag, size_t targetSetIndex);
+        void syncBlock(const unsigned long& address);
+        // void handleReadHit(char* dest, char* cacheBlock, const unsigned long &address);
 
         // read maximum amounts: block size
-        void read(char* dest, const unsigned long &address);
-        void write(char* src, const unsigned long &address);
+        void read(char* dest, size_t destlen, const unsigned long &address);
+        void write(char* src, size_t srclen, const unsigned long &address);
+        // void setLowerCache(Cache* lower_bank);
+        // void setLowerMemory(Memory* lower_bank);
+        // void setLowerBank(void* lower_bank);
+        // void setLowerCache(Cache* cache_object);
+        // void setMemory(Memory* memory_object);
 
     private:
         CacheConfig* _config;
         struct MetaRow* _metaData;
-        Cache* _lower; // lower level of cache object
-        Cache* _upper; // upper level of cache object
+        Memory* _lowerMemory;
+        Cache* _lowerCache;
         char* _data;
 };
-
-// }
