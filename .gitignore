@@ -32,6 +32,5 @@
 *.app
 
 CMakeFiles/*
-cachesim
-./cachesim
 .vscode/*
+build

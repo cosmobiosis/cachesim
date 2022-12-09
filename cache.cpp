@@ -20,20 +20,36 @@ RWObject::RWObject(char* data): _data(data) {
 
 RWObject::~RWObject() {}
 
+CacheFactory::CacheFactory(CacheConfig* config) {
+    this->_config = config;
+}
+
+void CacheFactory::setConfig(CacheConfig* config) {
+    this->_config = config;
+}
+
+Cache* CacheFactory::makeCache() {
+    char* data = (char*)malloc(this->_config->_cacheCapacity * sizeof(char));
+    std::cout << (this->_config == nullptr) << std::endl;
+    Cache* cache = new Cache(data, this->_config, nullptr);
+    return cache;
+}
+
 CacheConfig::CacheConfig(
         int memoryAddrLen,
-        int blockSize, 
-        int setAssociativity, 
+        size_t cacheCapacity,
+        size_t blockSize,
+        size_t setAssociativity, 
         WritePolicy writePolicy, 
         ReplacementPolicy replacementPolicy
     ):
     _memoryAddrLen(memoryAddrLen),
+    _cacheCapacity(cacheCapacity),
     _blockSize(blockSize),
     _setAssociativity(setAssociativity),
     _writePolicy(writePolicy),
     _replacementPolicy(replacementPolicy) {
-    size_t cacheSize = sizeof(this->_cacheSize);
-    this->_numBlocks = cacheSize / blockSize;
+    this->_numBlocks = int(cacheCapacity / blockSize);
 
     _numBitSetIndex = int(log2(this->_numBlocks / setAssociativity));
     _numBitBlockOffset = int(log2(blockSize));
@@ -42,31 +58,26 @@ CacheConfig::CacheConfig(
 
 CacheConfig::~CacheConfig() {}
 
-Cache::Cache(char* cacheData, CacheConfig* config, RWObject* lowerRW) : RWObject(cacheData) {
-    setConfig(config);
-    this->_lower = lowerRW;
-}
-
-void Cache::setConfig(CacheConfig* config) {
-    this->_config = config;
+Cache::Cache(char* cacheData, CacheConfig* config, RWObject* lowerRW) : _config(config), RWObject(cacheData) {
     this->_metaData = (struct MetaRow*)malloc(this->_config->_numBlocks * sizeof(struct MetaRow));
+    this->_lower = lowerRW;
 }
 
 Cache::~Cache() {}
 
-size_t CacheConfig::parseTag(const unsigned long &address) {
-    unsigned long tag = address >> (this->_numBitSetIndex + this->_numBitBlockOffset);
+size_t Cache::parseTag(const unsigned long &address) {
+    unsigned long tag = address >> (this->_config->_numBitSetIndex + this->_config->_numBitBlockOffset);
     return size_t(tag);
 }
 
-size_t CacheConfig::parseSetIndex(const unsigned long &address) {
-    unsigned long shifted = address >> (this->_numBitBlockOffset);
-    unsigned long setIndex = shifted & int(pow(2, this->_numBitSetIndex) - 1);
+size_t Cache::parseSetIndex(const unsigned long &address) {
+    unsigned long shifted = address >> (this->_config->_numBitBlockOffset);
+    unsigned long setIndex = shifted & int(pow(2, this->_config->_numBitSetIndex) - 1);
     return size_t(setIndex);
 }
 
-size_t CacheConfig::parseBlockInternalOffset(const unsigned long &address) {
-    return address & int(pow(2, this->_numBitBlockOffset) - 1);
+size_t Cache::parseBlockInternalOffset(const unsigned long &address) {
+    return address & int(pow(2, this->_config->_numBitBlockOffset) - 1);
 }
 
 char* RWObject::getData() {
@@ -85,9 +96,13 @@ char* Cache::getCacheBlock(size_t targetTag, size_t targetSetIndex) {
     return nullptr;
 }
 
+void Cache::setLowerRWObject(RWObject* lowerRW) {
+    this->_lower = lowerRW;
+}
+
 void Cache::syncBlock(const unsigned long& address) {
-    size_t tag = this->_config->parseTag(address);
-    size_t setIndex = this->_config->parseSetIndex(address);
+    size_t tag = this->parseTag(address);
+    size_t setIndex = this->parseSetIndex(address);
 
     size_t setSize = this->_config->_setAssociativity;
     size_t blockIndex = setIndex * setSize;
@@ -126,8 +141,8 @@ void Cache::syncBlock(const unsigned long& address) {
 }
 
 void Cache::read(char* dest, size_t destlen, const unsigned long &address) {
-    size_t tag = this->_config->parseTag(address);
-    size_t setIndex = this->_config->parseSetIndex(address);
+    size_t tag = this->parseTag(address);
+    size_t setIndex = this->parseSetIndex(address);
     size_t blockSize = this->_config->_blockSize;
 
     _read_count += 1;
@@ -141,14 +156,14 @@ void Cache::read(char* dest, size_t destlen, const unsigned long &address) {
     }
     // Continue with read
     // read blocksize - offset
-    size_t inBlockOffset = this->_config->parseBlockInternalOffset(address);
+    size_t inBlockOffset = this->parseBlockInternalOffset(address);
     size_t readSize = blockSize - inBlockOffset;
     memcpy(dest, cacheBlock + inBlockOffset, readSize);
 }
 
 void Cache::write(char* src, size_t srclen, const unsigned long &address) {
-    size_t tag = this->_config->parseTag(address);
-    size_t setIndex = this->_config->parseSetIndex(address);
+    size_t tag = this->parseTag(address);
+    size_t setIndex = this->parseSetIndex(address);
     size_t blockSize = this->_config->_blockSize;
 
     _write_count += 1;
@@ -161,7 +176,7 @@ void Cache::write(char* src, size_t srclen, const unsigned long &address) {
     }
 
     // Continue with write
-    size_t inBlockOffset = this->_config->parseBlockInternalOffset(address);
+    size_t inBlockOffset = this->parseBlockInternalOffset(address);
     size_t writeSize = blockSize - inBlockOffset;
     memcpy(cacheBlock + inBlockOffset, src, writeSize);
 

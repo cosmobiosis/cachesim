@@ -4,24 +4,32 @@
 #include <sstream>
 #include <stdexcept>
 
-enum WritePolicy { Through, Back };
-enum ReplacementPolicy { LRU, FIFO };
+struct MetaRow;
+class CacheConfig;
+class CacheFactory;
+class RWObject;
+class Cache;
+class Memory;
+
+enum WritePolicy { THROUGH, BACK };
+enum ReplacementPolicy { DUMMY, LRU, FIFO };
 
 class CacheConfig {
     public:
         CacheConfig(
             int memoryAddrLen,
-            int blockSize,
-            int setAssociativity, 
+            size_t cacheCapacity,
+            size_t blockSize,
+            size_t setAssociativity, 
             WritePolicy writePolicy, 
             ReplacementPolicy replacementPolicy
         );
         ~CacheConfig();
-        int _cacheSize;
         int _memoryAddrLen;
-        int _blockSize;
-        int _setAssociativity;
-        int _numBlocks;
+        size_t _cacheCapacity;
+        size_t _blockSize;
+        size_t _setAssociativity;
+        size_t _numBlocks;
         WritePolicy _writePolicy;
         ReplacementPolicy _replacementPolicy;
 
@@ -29,11 +37,6 @@ class CacheConfig {
         int _numBitTag;
         int _numBitSetIndex;
         int _numBitBlockOffset;
-
-        // functions
-        size_t parseTag(const unsigned long &address);
-        size_t parseSetIndex(const unsigned long &address);
-        size_t parseBlockInternalOffset(const unsigned long &address);
 };
 
 class RWObject {
@@ -57,11 +60,24 @@ struct MetaRow {
     bool valid;
 };
 
+class CacheFactory {
+    public:
+        CacheFactory(CacheConfig* config);
+        void setConfig(CacheConfig* config);
+        Cache* makeCache();
+    private:
+        CacheConfig* _config;
+};
+
 class Cache: public RWObject {
     public:
         Cache(char* cacheData, CacheConfig* config, RWObject* lowerRW);
         ~Cache();
-        void setConfig(CacheConfig* config);
+        // functions
+        size_t parseTag(const unsigned long &address);
+        size_t parseSetIndex(const unsigned long &address);
+        size_t parseBlockInternalOffset(const unsigned long &address);
+
         bool isValid(char* targetSet);
 
         // read write maximum amounts: block size
@@ -71,6 +87,8 @@ class Cache: public RWObject {
 
         char* getCacheBlock(size_t targetTag, size_t targetSetIndex);
         void syncBlock(const unsigned long& address);
+
+        void setLowerRWObject(RWObject* lowerRW);
     private:
         CacheConfig* _config;
         struct MetaRow* _metaData;
@@ -84,7 +102,3 @@ class Memory: public RWObject {
         void read(char* dest, size_t destlen, const unsigned long &address);
         void write(char* src, size_t srclen, const unsigned long &address);
 };
-
-// class CacheClient : public  {
-
-// }
