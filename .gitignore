@@ -33,4 +33,5 @@
 
 CMakeFiles/*
 cachesim
+./cachesim
 .vscode/*
