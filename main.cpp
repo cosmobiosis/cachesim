@@ -10,5 +10,6 @@ int main(int argc, char* argv[])
   // }
   // const int param1 = std::stoi(argv[1]);
   // CacheConfig* config = new CacheConfig();
+  Memory* memory = new Memory(nullptr);
   return 0;
 }

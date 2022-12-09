@@ -231,6 +231,12 @@ cachesim_BINARY_DIR:STATIC=/Users/cosmo/Desktop/Files/ucsd/240/cachesim
 //Value Computed by CMake
 cachesim_SOURCE_DIR:STATIC=/Users/cosmo/Desktop/Files/ucsd/240/cachesim
 
+//Value Computed by CMake
+src_BINARY_DIR:STATIC=/Users/cosmo/Desktop/Files/ucsd/240/cachesim
+
+//Value Computed by CMake
+src_SOURCE_DIR:STATIC=/Users/cosmo/Desktop/Files/ucsd/240/cachesim
+
 
 ########################
 # INTERNAL cache entries

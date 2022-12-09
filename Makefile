@@ -130,19 +130,6 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named cachesimlib
-
-# Build rule for target.
-cachesimlib: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 cachesimlib
-.PHONY : cachesimlib
-
-# fast build rule for target.
-cachesimlib/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/cachesimlib.dir/build.make CMakeFiles/cachesimlib.dir/build
-.PHONY : cachesimlib/fast
-
-#=============================================================================
 # Target rules for targets named cachesim
 
 # Build rule for target.
@@ -161,7 +148,7 @@ cache.o: cache.cpp.o
 
 # target to build an object file
 cache.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/cachesimlib.dir/build.make CMakeFiles/cachesimlib.dir/cache.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/cachesim.dir/build.make CMakeFiles/cachesim.dir/cache.cpp.o
 .PHONY : cache.cpp.o
 
 cache.i: cache.cpp.i
@@ -170,7 +157,7 @@ cache.i: cache.cpp.i
 
 # target to preprocess a source file
 cache.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/cachesimlib.dir/build.make CMakeFiles/cachesimlib.dir/cache.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/cachesim.dir/build.make CMakeFiles/cachesim.dir/cache.cpp.i
 .PHONY : cache.cpp.i
 
 cache.s: cache.cpp.s
@@ -179,7 +166,7 @@ cache.s: cache.cpp.s
 
 # target to generate assembly for a file
 cache.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/cachesimlib.dir/build.make CMakeFiles/cachesimlib.dir/cache.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/cachesim.dir/build.make CMakeFiles/cachesim.dir/cache.cpp.s
 .PHONY : cache.cpp.s
 
 main.o: main.cpp.o
@@ -218,7 +205,6 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... cachesim"
-	@echo "... cachesimlib"
 	@echo "... cache.o"
 	@echo "... cache.i"
 	@echo "... cache.s"
