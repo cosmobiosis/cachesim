@@ -1,4 +1,0 @@
-/Users/cosmo/Desktop/Files/ucsd/240/cachesim/CMakeFiles/rebuild_cache.dir
-/Users/cosmo/Desktop/Files/ucsd/240/cachesim/CMakeFiles/edit_cache.dir
-/Users/cosmo/Desktop/Files/ucsd/240/cachesim/CMakeFiles/cachesimlib.dir
-/Users/cosmo/Desktop/Files/ucsd/240/cachesim/CMakeFiles/cachesim.dir
