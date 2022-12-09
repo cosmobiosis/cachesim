@@ -30,7 +30,6 @@ void CacheFactory::setConfig(CacheConfig* config) {
 
 Cache* CacheFactory::makeCache() {
     char* data = (char*)malloc(this->_config->_cacheCapacity * sizeof(char));
-    std::cout << (this->_config == nullptr) << std::endl;
     Cache* cache = new Cache(data, this->_config, nullptr);
     return cache;
 }
@@ -84,16 +83,16 @@ char* RWObject::getData() {
     return this->_data;
 }
 
-char* Cache::getCacheBlock(size_t targetTag, size_t targetSetIndex) {
+void Cache::getCacheBlock(char** cacheBlockPointer, size_t targetTag, size_t targetSetIndex) {
     size_t setSize = this->_config->_setAssociativity;
     size_t blockIndex = targetSetIndex * setSize;
     for (int i = blockIndex; i < blockIndex + setSize; i++) {
         if (this->_metaData[i].valid && this->_metaData[i].tag == targetTag) {
             char* cacheHead = this->getData();
-            return cacheHead + i * this->_config->_blockSize;
+            *cacheBlockPointer = cacheHead + i * this->_config->_blockSize;
+            return;
         }
     }
-    return nullptr;
 }
 
 void Cache::setLowerRWObject(RWObject* lowerRW) {
@@ -113,7 +112,6 @@ void Cache::syncBlock(const unsigned long& address) {
 
     char* newBlock = (char*)malloc(blockSize * sizeof(char));
     this->_lower->read(newBlock, blockSize, blockHeadAddress);
-
 
     char* cacheHead = this->getData();
 
@@ -146,13 +144,17 @@ void Cache::read(char* dest, size_t destlen, const unsigned long &address) {
     size_t blockSize = this->_config->_blockSize;
 
     _read_count += 1;
-    char* cacheBlock = getCacheBlock(tag, setIndex);
+    char** cacheBlockPointer = (char**)malloc(sizeof(char*));
+    getCacheBlock(cacheBlockPointer, tag, setIndex);
+    char* cacheBlock = *cacheBlockPointer;
 
     // Read Miss, bring the data to this level cache by querying the lower level
     if (cacheBlock == nullptr) {
         _miss_read_count += 1;
         // copy new block to this level
         syncBlock(address);
+        getCacheBlock(cacheBlockPointer, tag, setIndex);
+        cacheBlock = *cacheBlockPointer;
     }
     // Continue with read
     // read blocksize - offset
@@ -167,12 +169,16 @@ void Cache::write(char* src, size_t srclen, const unsigned long &address) {
     size_t blockSize = this->_config->_blockSize;
 
     _write_count += 1;
-    char* cacheBlock = getCacheBlock(tag, setIndex);
+    char** cacheBlockPointer = (char**)malloc(sizeof(char*));
+    getCacheBlock(cacheBlockPointer, tag, setIndex);
+    char* cacheBlock = *cacheBlockPointer;
 
     // Write Miss
     if (cacheBlock == nullptr) {
         _miss_write_count += 1;
         syncBlock(address);
+        getCacheBlock(cacheBlockPointer, tag, setIndex);
+        cacheBlock = *cacheBlockPointer;
     }
 
     // Continue with write
