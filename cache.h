@@ -9,11 +9,13 @@ enum ReplacementPolicy { LRU, FIFO };
 class CacheConfig {
     public:
         CacheConfig(
-            int blockSize, 
+            int memoryAddrLen,
+            int blockSize,
             int setAssociativity, 
             WritePolicy writePolicy, 
             ReplacementPolicy replacementPolicy
         );
+        int _memoryAddrLen;
         int _blockSize;
         int _setAssociativity;
         WritePolicy _writePolicy;
@@ -26,8 +28,9 @@ class RWObject {
         // False indicating a read miss
         virtual bool read(char* dest, unsigned long address);
         virtual void write(char* src, unsigned long address);
-        int _miss_read_count;
         int _read_count;
+        int _miss_read_count;
+        int _write_count;
         int _miss_write_count;
         char* getData();
     private:
