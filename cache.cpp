@@ -85,10 +85,21 @@ char* Cache::getCacheBlock(size_t targetTag, size_t targetSetIndex) {
     return nullptr;
 }
 
-void Cache::putNewBlock(size_t tag, size_t setIndex, char* newBlock) {
+void Cache::syncBlock(const unsigned long& address) {
+    size_t tag = this->_config->parseTag(address);
+    size_t setIndex = this->_config->parseSetIndex(address);
+
     size_t setSize = this->_config->_setAssociativity;
     size_t blockIndex = setIndex * setSize;
     size_t blockSize = this->_config->_blockSize;
+
+    size_t numBitBlockOffset = this->_config->_numBitBlockOffset;
+    size_t blockHeadAddress = ((address >> numBitBlockOffset) << numBitBlockOffset);
+
+    char* newBlock = (char*)malloc(blockSize * sizeof(char));
+    this->_lower->read(newBlock, blockSize, blockHeadAddress);
+
+
     char* cacheHead = this->getData();
 
     for (int i = blockIndex; i < blockIndex + setSize; i++) {
@@ -118,24 +129,20 @@ void Cache::read(char* dest, size_t destlen, const unsigned long &address) {
     size_t tag = this->_config->parseTag(address);
     size_t setIndex = this->_config->parseSetIndex(address);
     size_t blockSize = this->_config->_blockSize;
-    size_t numBitBlockOffset = this->_config->_numBitBlockOffset;
 
-    char* cacheBlock = getCacheBlock(tag, setIndex);
     _read_count += 1;
+    char* cacheBlock = getCacheBlock(tag, setIndex);
 
     // Read Miss, bring the data to this level cache by querying the lower level
     if (cacheBlock == nullptr) {
         _miss_read_count += 1;
         // copy new block to this level
-        char* newBlock = (char*)malloc(blockSize * sizeof(char));
-        size_t blockHeadAddress = ((address >> numBitBlockOffset) << numBitBlockOffset);
-        this->_lower->read(newBlock, blockSize, blockHeadAddress);
-        putNewBlock(tag, setIndex, newBlock);
+        syncBlock(address);
     }
     // Continue with read
     // read blocksize - offset
     size_t inBlockOffset = this->_config->parseBlockInternalOffset(address);
-    size_t readSize = this->_config->_blockSize - inBlockOffset;
+    size_t readSize = blockSize - inBlockOffset;
     memcpy(dest, cacheBlock + inBlockOffset, readSize);
 }
 
@@ -143,25 +150,23 @@ void Cache::write(char* src, size_t srclen, const unsigned long &address) {
     size_t tag = this->_config->parseTag(address);
     size_t setIndex = this->_config->parseSetIndex(address);
     size_t blockSize = this->_config->_blockSize;
-    size_t numBitBlockOffset = this->_config->_numBitBlockOffset;
 
     _write_count += 1;
     char* cacheBlock = getCacheBlock(tag, setIndex);
+
     // Write Miss
     if (cacheBlock == nullptr) {
         _miss_write_count += 1;
-        // put empty block to evict old block
-        char* newBlock = (char*)malloc(blockSize * sizeof(char));
-        putNewBlock(tag, setIndex, newBlock);
+        syncBlock(address);
     }
 
     // Continue with write
     size_t inBlockOffset = this->_config->parseBlockInternalOffset(address);
-    size_t writeSize = this->_config->_blockSize - inBlockOffset;
+    size_t writeSize = blockSize - inBlockOffset;
     memcpy(cacheBlock + inBlockOffset, src, writeSize);
 
     // Write through
-    // TODO: implement write buffer
+    // TODO: implement write buffer for writeBack
     this->_lower->write(src, srclen, address);
 }
 

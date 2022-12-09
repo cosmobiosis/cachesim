@@ -70,7 +70,7 @@ class Cache: public RWObject {
         void write(char* src, size_t srclen, const unsigned long &address);
 
         char* getCacheBlock(size_t targetTag, size_t targetSetIndex);
-        void putNewBlock(size_t tag, size_t setIndex, char* newBlock);
+        void syncBlock(const unsigned long& address);
     private:
         CacheConfig* _config;
         struct MetaRow* _metaData;
