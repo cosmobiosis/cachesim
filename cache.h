@@ -23,8 +23,9 @@ class CacheConfig {
 class RWObject {
     public:
         RWObject(char* data);
-        bool read(char* dest, unsigned long address);
-        void write(char* src, unsigned long address);
+        // False indicating a read miss
+        virtual bool read(char* dest, unsigned long address);
+        virtual void write(char* src, unsigned long address);
         int _miss_read_count;
         int _read_count;
         int _miss_write_count;
@@ -35,13 +36,19 @@ class RWObject {
 
 class Cache: public RWObject {
     public:
-        Cache(char* data, CacheConfig* config, RWObject* lowerRW);
+        Cache(char* cache_data, CacheConfig* config, RWObject* lowerRW);
         void setConfig(CacheConfig* config);
         void setLowerRW(RWObject* _lower);
-        // False indicating a read miss
         bool read(char* dest, unsigned long address);
         void write(char* src, unsigned long address);
     private:
         CacheConfig* _config;
         RWObject* _lower; // lower level of memory
+};
+
+class Memory: public RWObject {
+    public:
+        Memory(char* memory_data);
+        bool read(char* dest, unsigned long address);
+        void write(char* src, unsigned long address);
 };
