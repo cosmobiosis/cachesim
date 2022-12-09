@@ -73,30 +73,40 @@ char* RWObject::getData() {
     return this->_data;
 }
 
-std::pair<bool, const struct MetaRow&> Cache::getMetaRow(size_t targetTag, size_t targetSetIndex) {
+char* Cache::getCacheBlock(size_t targetTag, size_t targetSetIndex) {
     size_t setSize = this->_config->_setAssociativity;
     size_t setOffset = targetSetIndex * setSize;
     for (int i = setOffset; i < setOffset + setSize; i++) {
         if (this->_metaData[i].valid && this->_metaData[i].tag == targetTag) {
-            return make_pair(true, this->_metaData[i]);
+            char* cacheHead = this->getData();
+            return cacheHead + i * this->_config->_blockSize;
         }
     }
-    return make_pair(false, this->_metaData[0]);
+    return nullptr;
 }
 
-bool Cache::read(char* dest, const unsigned long &address) {
+void Cache::read(char* dest, const unsigned long &address) {
     size_t tag = this->_config->parseTag(address);
     size_t setIndex = this->_config->parseSetIndex(address);
-    size_t cacheOffset = this->_config->parseBlockOffset(address);
 
-    char* cache = this->getData();
-    
-    return true;
+    char* cacheBlock = getCacheBlock(tag, setIndex);
+    _read_count += 1;
+
+    // Read Miss
+    if (cacheBlock == nullptr) {
+        _miss_read_count += 1;
+        this->_lower->read(dest, address);
+        return;
+    }
+    // Read Hit
+    // read blocksize - offset
+    size_t cacheOffset = this->_config->parseBlockOffset(address);
+    size_t readSize = this->_config->_blockSize - cacheOffset;
+    memcpy(dest, cacheBlock + cacheOffset, readSize);
 }
 
 void Cache::write(char* src, const unsigned long &address) {
-
-    return;
+    
 }
 
 Memory::~Memory() {}
@@ -105,10 +115,12 @@ Memory::Memory(char* memoryData): RWObject(memoryData) {
 
 }
 
-bool Memory::read(char* dest, const unsigned long &address) {
-    return true;
+void Memory::read(char* dest, const unsigned long &address) {
+    char* data = this->getData();
+    memcpy(dest, &(data[address]), sizeof(dest));
 }
 
 void Memory::write(char* src, const unsigned long &address) {
-    return;
+    char* data = this->getData();
+    memcpy(&(data[address]), src, sizeof(src));
 }
