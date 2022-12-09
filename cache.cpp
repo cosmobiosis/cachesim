@@ -40,6 +40,9 @@ void Cache::write(char* src, unsigned long address) {
     return;
 }
 
+Memory::Memory(char* memory_data): RWObject(memory_data) {
+}
+
 bool Memory::read(char* dest, unsigned long address) {
     return true;
 }
