@@ -85,7 +85,7 @@ class Cache: public RWObject {
         void read(char* dest, size_t destlen, const unsigned long &address);
         void write(char* src, size_t srclen, const unsigned long &address);
 
-        void getCacheBlock(char** blockHead, size_t targetTag, size_t targetSetIndex);
+        char* getCacheBlock(size_t targetTag, size_t targetSetIndex);
         void syncBlock(const unsigned long& address);
 
         void setLowerRWObject(RWObject* lowerRW);

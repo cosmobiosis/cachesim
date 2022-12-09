@@ -83,16 +83,16 @@ char* RWObject::getData() {
     return this->_data;
 }
 
-void Cache::getCacheBlock(char** cacheBlockPointer, size_t targetTag, size_t targetSetIndex) {
+char* Cache::getCacheBlock(size_t targetTag, size_t targetSetIndex) {
     size_t setSize = this->_config->_setAssociativity;
     size_t blockIndex = targetSetIndex * setSize;
     for (int i = blockIndex; i < blockIndex + setSize; i++) {
         if (this->_metaData[i].valid && this->_metaData[i].tag == targetTag) {
             char* cacheHead = this->getData();
-            *cacheBlockPointer = cacheHead + i * this->_config->_blockSize;
-            return;
+            return cacheHead + i * this->_config->_blockSize;
         }
     }
+    return nullptr;
 }
 
 void Cache::setLowerRWObject(RWObject* lowerRW) {
@@ -144,17 +144,14 @@ void Cache::read(char* dest, size_t destlen, const unsigned long &address) {
     size_t blockSize = this->_config->_blockSize;
 
     _read_count += 1;
-    char** cacheBlockPointer = (char**)malloc(sizeof(char*));
-    getCacheBlock(cacheBlockPointer, tag, setIndex);
-    char* cacheBlock = *cacheBlockPointer;
+    char* cacheBlock = getCacheBlock(tag, setIndex);
 
     // Read Miss, bring the data to this level cache by querying the lower level
     if (cacheBlock == nullptr) {
         _miss_read_count += 1;
         // copy new block to this level
         syncBlock(address);
-        getCacheBlock(cacheBlockPointer, tag, setIndex);
-        cacheBlock = *cacheBlockPointer;
+        cacheBlock = getCacheBlock( tag, setIndex);;
     }
     // Continue with read
     // read blocksize - offset
@@ -169,16 +166,13 @@ void Cache::write(char* src, size_t srclen, const unsigned long &address) {
     size_t blockSize = this->_config->_blockSize;
 
     _write_count += 1;
-    char** cacheBlockPointer = (char**)malloc(sizeof(char*));
-    getCacheBlock(cacheBlockPointer, tag, setIndex);
-    char* cacheBlock = *cacheBlockPointer;
+    char* cacheBlock = getCacheBlock(tag, setIndex);
 
     // Write Miss
     if (cacheBlock == nullptr) {
         _miss_write_count += 1;
         syncBlock(address);
-        getCacheBlock(cacheBlockPointer, tag, setIndex);
-        cacheBlock = *cacheBlockPointer;
+        cacheBlock = getCacheBlock(tag, setIndex);
     }
 
     // Continue with write
