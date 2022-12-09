@@ -41,8 +41,8 @@ class RWObject {
         RWObject(char* data);
         virtual ~RWObject() = 0;
         // False indicating a read miss
-        virtual void read(char* dest, const unsigned long &address) = 0;
-        virtual void write(char* src, const unsigned long &address) = 0;
+        virtual void read(char* dest, size_t destlen, const unsigned long &address) = 0;
+        virtual void write(char* src, size_t srclen, const unsigned long &address) = 0;
         int _read_count;
         int _miss_read_count;
         int _write_count;
@@ -65,8 +65,8 @@ class Cache: public RWObject {
         bool isValid(char* targetSet);
 
         // read maximum amounts: block size
-        void read(char* dest, const unsigned long &address);
-        void write(char* src, const unsigned long &address);
+        void read(char* dest, size_t destlen, const unsigned long &address);
+        void write(char* src, size_t srclen, const unsigned long &address);
 
         char* getCacheBlock(size_t targetTag, size_t targetSetIndex);
     private:
@@ -79,8 +79,8 @@ class Memory: public RWObject {
     public:
         Memory(char* memoryData);
         ~Memory();
-        void read(char* dest, const unsigned long &address);
-        void write(char* src, const unsigned long &address);
+        void read(char* dest, size_t destlen, const unsigned long &address);
+        void write(char* src, size_t srclen, const unsigned long &address);
 };
 
 // class CacheClient : public  {
