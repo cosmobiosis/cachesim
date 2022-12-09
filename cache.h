@@ -33,7 +33,7 @@ class CacheConfig {
         // functions
         size_t parseTag(const unsigned long &address);
         size_t parseSetIndex(const unsigned long &address);
-        size_t parseBlockOffset(const unsigned long &address);
+        size_t parseBlockInternalOffset(const unsigned long &address);
 };
 
 class RWObject {
@@ -64,11 +64,13 @@ class Cache: public RWObject {
         void setConfig(CacheConfig* config);
         bool isValid(char* targetSet);
 
-        // read maximum amounts: block size
+        // read write maximum amounts: block size
+        // read / write one block
         void read(char* dest, size_t destlen, const unsigned long &address);
         void write(char* src, size_t srclen, const unsigned long &address);
 
         char* getCacheBlock(size_t targetTag, size_t targetSetIndex);
+        void putNewBlock(size_t tag, size_t setIndex, char* newBlock);
     private:
         CacheConfig* _config;
         struct MetaRow* _metaData;
