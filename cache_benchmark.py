@@ -84,14 +84,19 @@ class Cache:
 colorEnums = ["#746ab0", "#ffce30", "#e83845", "#e389b9", "#800080", "#FF7F50", "#800080", "#FF7F50", "#800080", "#FF7F50"]
 colorInd = 0
 
-def int_to_binary(integer, num_tag_bit):
+def int_to_binary(byte_address_int, num_tag_bit, num_index_bit):
     """ 
-        Extract the tag bits from a decimal version of Byte address
-        For example: 
-        32768 ==> 001000 ~ 1000
+    Extract 
+    1) tag bit
+    2) index bit
+    3) byte offset bit
     """ 
-    string = format(integer, '#020b')[2:][:num_tag_bit]
-    return int(string)
+    binary_string = format(byte_address_int, '#020b')[2:]
+    tag_bit = binary_string[:num_tag_bit]
+    index_bit = binary_string[num_tag_bit: num_tag_bit+num_index_bit]
+    byte_offset_bit = binary_string[num_tag_bit+num_index_bit:]
+    return (tag_bit, int(index_bit, 2), byte_offset_bit)
+
 
 ##############################
 #  Memory and Cache Parameters
@@ -103,10 +108,9 @@ CACHE_BLOCK_SIZE = 8      # 8B
 num_cache_block = CACHE_SIZE / CACHE_BLOCK_SIZE
 num_physical_address_bits = int(math.log2(MEMORY_SIZE))
 num_byteoffset_bits = int(math.log2(CACHE_BLOCK_SIZE))
-set_associavity_array = [1, 2, 4, 8, 16]
+set_associavity_array = [1, 2, 4, 8]
 
 x_set = []
-y2_hit = []
 y2_miss = []
 for set_associavity in set_associavity_array:
     x_set.append(set_associavity)
@@ -121,14 +125,14 @@ for set_associavity in set_associavity_array:
 
     # Address traces are randomly generated 
     for k in range(10000):
-        rand_set_index = random.choice(list(range(num_of_set)))   
-        byte_address = random.choice([x for x in range(MEMORY_SIZE)])
-        tag = int_to_binary(byte_address, num_tag_bit)
-        c1.writer(rand_set_index, tag)
+        # Sample a memory byte address
+        byte_address = random.choice(list(range(MEMORY_SIZE)))
+        (tag_bit, set_index_bit, _) = int_to_binary(byte_address, num_tag_bit, num_index_bits)
+        c1.writer(set_index_bit, tag_bit)
 
     y2_miss.append(c2.read_miss)
+
     plt.plot(x_set, y2_miss, 'x-', color = colorEnums[colorInd], label="L2 cache miss tag: " + str(num_tag_bit))
-    
     colorInd += 1
     config_string = "Physical address bits: {}, index bits: {}, tab bits: {}, {}-way set associative".format(num_physical_address_bits, 
     num_index_bits, num_tag_bit, set_associavity)
@@ -138,8 +142,7 @@ title_string = "Read miss (Random)".format(CACHE_SIZE//1024)
 plt.title(title_string)
 plt.xlabel("Set Associativity")
 plt.ylabel("Counts of Read Miss")
-plt.savefig("vis/benchmark_random_{}.png".format(10000))
-
+plt.savefig("visual/benchmark_random_{}.png".format(10000))
 
 
 # ##############################
@@ -152,10 +155,9 @@ plt.savefig("vis/benchmark_random_{}.png".format(10000))
 # num_cache_block = CACHE_SIZE / CACHE_BLOCK_SIZE
 # num_physical_address_bits = int(math.log2(MEMORY_SIZE))
 # num_byteoffset_bits = int(math.log2(CACHE_BLOCK_SIZE))
-# set_associavity_array = [1, 2, 4, 8, 16]
+# set_associavity_array = [1, 2, 4, 8]
 
 # x_set = []
-# y2_hit = []
 # y2_miss = []
 # for set_associavity in set_associavity_array:
 #     x_set.append(set_associavity)
@@ -169,14 +171,12 @@ plt.savefig("vis/benchmark_random_{}.png".format(10000))
 #     c1.child = c2
 
 #     # Address traces are linearly generated
-#     for k in range(10000):
-#         rand_set_index = random.choice(list(range(num_of_set)))   
-#         tag = int_to_binary(k, num_tag_bit)
-#         c1.writer(rand_set_index, tag)
-
+#     for k in range(10000): 
+#         (tag_bit, set_index_bit, _) = int_to_binary(k, num_tag_bit, num_index_bits)
+#         c1.writer(set_index_bit, tag_bit)
 #     y2_miss.append(c2.read_miss)
+
 #     plt.plot(x_set, y2_miss, 'x-', color = colorEnums[colorInd], label="L2 cache miss tag: " + str(num_tag_bit))
-    
 #     colorInd += 1
 #     config_string = "Physical address bits: {}, index bits: {}, tab bits: {}, {}-way set associative".format(num_physical_address_bits, 
 #     num_index_bits, num_tag_bit, set_associavity)
@@ -186,5 +186,4 @@ plt.savefig("vis/benchmark_random_{}.png".format(10000))
 # plt.title(title_string)
 # plt.xlabel("Set Associativity")
 # plt.ylabel("Counts of Read Miss")
-# plt.savefig("vis/benchmark_linear_{}.png".format(10000))
-
+# plt.savefig("visual/benchmark_linear_{}.png".format(10000))
