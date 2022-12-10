@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import math
 
 class Cache:
-    def __init__(self, num_set, set_associavity, blockSize=1, child=None):
+    def __init__(self, num_set, set_associavity, blockSize, child=None):
         """ 
         num_set:    Number of sets in the cache
         set_associavity:    Set associavity
@@ -193,8 +193,8 @@ plt.savefig("visual/lru_random_{}.png".format(10000))
 #     num_of_set = int(num_cache_block / set_ass)
 #     num_index_bit = int(math.log2(num_of_set))
 #     num_tag_bit = num_physical_address_bits - num_index_bit - num_byteoffset_bits
-#     c1 = Cache(num_of_set, set_ass)
-#     c2 = Cache(2 * num_of_set, 2 * set_ass)
+#     c1 = Cache(num_of_set, set_ass, CACHE_BLOCK_SIZE)
+#     c2 = Cache(2 * num_of_set, 2 * set_ass, CACHE_BLOCK_SIZE)
 #     c1.child = c2
 
 #     # Address traces are linearly generated
